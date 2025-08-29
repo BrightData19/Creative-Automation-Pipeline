@@ -1,0 +1,22 @@
+{
+  "campaign_name": "Summer Refresh 2024",
+  "target_market": "US West Coast",
+  "target_audience": "Young adults, 18-30, interested in outdoor activities and sustainable products.",
+  "campaign_message": "Stay cool, stay hydrated.",
+  "products": [
+    {
+      "name": "Eco-Friendly Water Bottle",
+      "image": null
+    },
+    {
+      "name": "Lightweight Running Cap",
+      "image": null
+    },
+    {
+      "name": "Polarized Sunglasses",
+      "image": "dropbox:/assets/Summer Refresh 2024/sunglasses_asset.jpg"
+    }
+  ],
+  "logo_path": "dropbox:/assets/Summer Refresh 2024/logo.png",
+  "inbox_folder": "dropbox:/assets/Summer Refresh 2024"
+}

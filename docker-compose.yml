@@ -1,0 +1,57 @@
+# Docker Compose for local development services.
+# This file sets up Redpanda (a Kafka-compatible event streaming platform)
+# and its administrative console.
+#
+# The Next.js and Python applications are intended to be run directly on the
+# host machine during development for faster iteration.
+
+services:
+  kafka:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.1.2
+    container_name: redpanda
+    command:
+      - redpanda
+      - start
+      - --smp 1
+      - --overprovisioned
+      - --node-id 0
+      - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://kafka:29092,OUTSIDE://localhost:9092
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+      - "9644:9644"
+    healthcheck:
+      test: ["CMD", "rpk", "cluster", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    environment:
+      - REDPANDA_ENABLE_KAFKA_API=true
+      - REDPANDA_ENABLE_OPENSEARCH=false
+
+  redpanda-console:
+    image: docker.redpanda.com/redpandadata/console:v2.2.3
+    container_name: redpanda-console
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - 8080:8080
+    environment:
+      KAFKA_BROKERS: kafka:29092
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/api/cluster-config",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

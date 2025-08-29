@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AssetsCreatedEventV1",
+  "description": "Schema for an event indicating a full set of variants has been created for a product.",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "campaign_name": {
+      "type": "string"
+    },
+    "product": {
+      "type": "string"
+    },
+    "variants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ratio": {
+            "type": "string",
+            "enum": ["1:1", "16:9", "9:16"]
+          },
+          "path": {
+            "type": "string",
+            "description": "The Dropbox path to the generated variant."
+          }
+        },
+        "required": ["ratio", "path"]
+      }
+    }
+  },
+  "required": ["event_id", "ts", "campaign_name", "product", "variants"]
+}

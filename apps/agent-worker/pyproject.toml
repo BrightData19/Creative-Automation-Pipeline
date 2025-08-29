@@ -1,0 +1,21 @@
+[project]
+name = "agent-worker"
+version = "0.1.0"
+description = "Creative Automation Agent Worker"
+requires-python = ">=3.13"
+dependencies = [
+    "kafka-python",
+    "python-dotenv",
+    "pydantic",
+    "langchain",
+    "langgraph",
+    "imagehash",
+    "langchain_core",
+    "langchain-openai>=0.3.32",
+    "dropbox",
+    "mcp>=1.13.1",
+    "google-generativeai>=0.7.0",
+]
+
+[tool.uv]
+dev-dependencies = []

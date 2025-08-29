@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PipelineStatusEventV1",
+  "description": "Schema for pipeline status updates.",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "campaign_name": {
+      "type": "string"
+    },
+    "product": {
+      "type": "string",
+      "description": "The product associated with this status update."
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "ingest_started",
+        "asset_downloaded",
+        "asset_generated",
+        "variants_saved",
+        "failed"
+      ]
+    },
+    "detail": {
+      "type": "string",
+      "description": "A human-readable description of the status."
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "A list of Dropbox paths to relevant artifacts (e.g., generated images)."
+    },
+    "error": {
+      "type": ["string", "null"],
+      "description": "An error message if the stage failed."
+    }
+  },
+  "required": [
+    "event_id",
+    "ts",
+    "campaign_name",
+    "product",
+    "stage",
+    "detail",
+    "artifacts"
+  ]
+}
