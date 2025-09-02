@@ -53,6 +53,12 @@ export default function RootLayout({
                 Home
               </Link>
               <Link
+                href="/approvals"
+                className="px-3 py-2 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-card rounded-lg transition-colors"
+              >
+                Approvals
+              </Link>
+              <Link
                 href="/upload"
                 className="px-3 py-2 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-card rounded-lg transition-colors"
               >

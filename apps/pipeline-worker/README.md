@@ -7,7 +7,7 @@ Purpose
 - Performs brand compliance and legal checks.
 - Produces variants in 1:1, 16:9, and 9:16 aspect ratios.
  - Ingests mixed assets (images, videos, audio, docs, presentations, graphics) from an inbox folder. Reuses images when available; otherwise generates a new base image (single high-res call, then resizes).
- - Saves generated and transient artifacts (ingested copies, prompts/messages, carousels, animated GIFs, catalog) to Dropbox/local storage.
+ - Saves generated and transient artifacts (prompts/messages, carousels, animated GIFs, catalog) to Dropbox/local storage.
 
 Run (Local, No Kafka/Dropbox)
 - Requirements: Python 3.11+, uv, Pillow, OpenCV (managed via `uv sync`).
@@ -29,7 +29,7 @@ Run (Full Stack)
 Input Brief (JSON)
 - Example: `data/samples/brief_sample.json`
 - Required fields: `campaign_name`, `target_market`, `target_audience`, `campaign_message`, `products` (≥2)
-- Optional: `logo_path`, `inbox_folder`
+- Optional: `brand_name`, `logo_path`, `inbox_folder`
 
 Storage Backends
 - Dropbox (default): set `DROPBOX_APP_KEY`, `DROPBOX_APP_SECRET`, `DROPBOX_REFRESH_TOKEN`; `STORAGE_BACKEND=dropbox`
@@ -47,7 +47,7 @@ Brand & Legal Compliance
 - Results emitted to Kafka in full-stack runs; printed in CLI runs.
 
 Ingestion & Outputs
-- Inbox ingestion: set `inbox_folder` in the brief (e.g., `dropbox:/assets/<campaign>`). The worker indexes and copies all files to `outputs/<campaign>/ingested/`.
+- Inbox ingestion: set `inbox_folder` in the brief (e.g., `dropbox:/assets/<campaign>`). The worker indexes files for reuse; no copies are made to an `ingested/` folder.
 - Product image reuse: if no `product.image` provided, the worker selects the best matching image from the inbox by filename; falls back to GenAI if none.
 - Outputs include:
   - Variants: `outputs/<campaign>/<product>/<ratio>/<market>.jpg`

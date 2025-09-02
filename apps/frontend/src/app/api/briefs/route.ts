@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { publish } from "@/lib/kafka";
 import { uploadBuffer, ensureFolder } from "@/lib/dropbox";
+import fs from "fs/promises";
+import path from "path";
 
 function slugify(s: string) {
   return s
@@ -12,6 +14,8 @@ function slugify(s: string) {
 
 const BriefSchema = z.object({
   campaign_name: z.string(),
+  brand_name: z.string().optional().nullable(),
+  brand_palette: z.array(z.string()).optional().nullable(),
   target_market: z.string(),
   target_audience: z.string(),
   campaign_message: z.string(),
@@ -29,6 +33,9 @@ const BriefSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const STORAGE_BACKEND = (
+      process.env.STORAGE_BACKEND || "dropbox"
+    ).toLowerCase();
     const contentType = req.headers.get("content-type") || "";
     let brief: z.infer<typeof BriefSchema>;
     let uploadedAssets: { name: string; dropboxPath: string }[] = [];
@@ -41,27 +48,59 @@ export async function POST(req: NextRequest) {
       brief = BriefSchema.parse(JSON.parse(briefStr));
 
       // Upload assets to Dropbox under /assets/<campaign>
-      // const root = process.env.DROPBOX_ROOT || "/Apps/CreativeAutomation";
-      // const campaignDir = `${root}/assets/${brief.campaign_name}`;
-      const campaignDir = `/assets/${brief.campaign_name}`;
-      await ensureFolder(campaignDir);
+      // Determine storage backend and target directory
+      const dropboxRoot =
+        process.env.DROPBOX_ROOT || "/Apps/CreativeAutomation";
+      const localRoot = process.env.LOCAL_ROOT || "local_storage";
+      const campaignRel = `/assets/${brief.campaign_name}`;
 
-      for (const [key, value] of form.entries()) {
-        if (
-          key !== "brief" &&
-          key !== "mapping" &&
-          value instanceof File &&
-          value.size > 0
-        ) {
-          const arrayBuffer = await value.arrayBuffer();
-          const buf = Buffer.from(arrayBuffer);
-          const destPath = `${campaignDir}/${value.name}`;
-          await uploadBuffer(destPath, buf);
-          uploadedAssets.push({
-            name: value.name,
-            dropboxPath: `dropbox:${destPath}`,
-          });
+      if (STORAGE_BACKEND === "dropbox") {
+        const campaignDir = campaignRel; // relative path within Dropbox root
+        await ensureFolder(campaignDir);
+
+        for (const [key, value] of form.entries()) {
+          if (
+            key !== "brief" &&
+            key !== "mapping" &&
+            value instanceof File &&
+            value.size > 0
+          ) {
+            const arrayBuffer = await value.arrayBuffer();
+            const buf = Buffer.from(arrayBuffer);
+            const destPath = `${campaignDir}/${value.name}`;
+            await uploadBuffer(buf, destPath);
+            uploadedAssets.push({
+              name: value.name,
+              dropboxPath: `dropbox:${destPath}`,
+            });
+          }
         }
+        // set inbox_folder for Dropbox
+        (brief as any).inbox_folder = `dropbox:${campaignRel}`;
+      } else {
+        // Local storage fallback (no Dropbox credentials required)
+        const campaignFsDir = path.join(localRoot, campaignRel);
+        await fs.mkdir(campaignFsDir, { recursive: true });
+
+        for (const [key, value] of form.entries()) {
+          if (
+            key !== "brief" &&
+            key !== "mapping" &&
+            value instanceof File &&
+            value.size > 0
+          ) {
+            const arrayBuffer = await value.arrayBuffer();
+            const buf = Buffer.from(arrayBuffer);
+            const destFsPath = path.join(campaignFsDir, value.name);
+            await fs.writeFile(destFsPath, buf);
+            uploadedAssets.push({
+              name: value.name,
+              dropboxPath: `local:${campaignRel}/${value.name}`,
+            });
+          }
+        }
+        // set inbox_folder for Local
+        (brief as any).inbox_folder = `local:${campaignRel}`;
       }
 
       // Infer logo_path and product images when filenames match
@@ -69,8 +108,7 @@ export async function POST(req: NextRequest) {
         ...a,
         slug: slugify(a.name),
       }));
-      // set inbox_folder
-      (brief as any).inbox_folder = `dropbox:${campaignDir}`;
+      // inbox_folder already set per backend above
 
       // Parse explicit mapping if present
       const mappingRaw = form.get("mapping");

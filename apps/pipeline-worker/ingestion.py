@@ -49,20 +49,19 @@ def index_inbox(inbox_folder: str) -> List[Asset]:
 
 
 def copy_all_assets_to_outputs(campaign: str, inbox_folder: str, assets: List[Asset]) -> List[Asset]:
-    """Copy all inbox assets to outputs/<campaign>/ingested for traceability."""
+    """Deprecated: previously copied inbox assets to outputs/<campaign>/ingested.
+
+    We now avoid duplicating source assets. This function performs a best-effort
+    cleanup of any existing `ingested` folder for the campaign and returns an
+    empty list to indicate no copies were made.
+    """
     out_dir = f"{storage.get_root()}/outputs/{campaign}/ingested"
-    storage.ensure_folder(out_dir)
-    copied: List[Asset] = []
-    for a in assets:
-        dest = f"{out_dir}/{a.name}"
-        try:
-            data = storage.download_bytes(a.path)
-            storage.upload_bytes(dest, data)
-            copied.append(Asset(name=a.name, path=f"dropbox:{dest}", kind=a.kind))
-        except Exception:
-            # best-effort copy
-            continue
-    return copied
+    try:
+        storage.delete_path(out_dir)
+    except Exception:
+        # Ignore if not present or backend denies deletion
+        pass
+    return []
 
 
 def _slug(text: str) -> str:
@@ -70,15 +69,19 @@ def _slug(text: str) -> str:
 
 
 def pick_product_image_asset(product_name: str, assets: List[Asset]) -> Optional[Asset]:
-    """Pick the best matching image asset for a product by filename slug match, fall back to any image."""
+    """Pick an image asset whose filename slug matches the product name.
+
+    If no asset matches, return None so the caller can generate a new image
+    for this product instead of incorrectly reusing a different product's asset.
+    """
     prod_slug = _slug(product_name)
     image_assets = [a for a in assets if a.kind == "image"]
-    # Direct slug contains
+    # Match by slug containment (e.g., "face mask" in "face-mask.jpg")
     for a in image_assets:
         if prod_slug and prod_slug in _slug(a.name):
             return a
-    # Fallback to first image
-    return image_assets[0] if image_assets else None
+    # No match found; signal to generate a new image for this product
+    return None
 
 
 def load_image_from_asset(asset: Asset) -> Image.Image:
@@ -86,4 +89,3 @@ def load_image_from_asset(asset: Asset) -> Image.Image:
     from io import BytesIO
 
     return Image.open(BytesIO(data)).convert("RGB")
-

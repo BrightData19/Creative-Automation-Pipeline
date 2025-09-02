@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@next/env':
+        specifier: ^15.5.2
+        version: 15.5.2
+      '@types/node-fetch':
+        specifier: ^2.6.13
+        version: 2.6.13
       dropbox:
         specifier: ^10.34.0
         version: 10.34.0(@types/node-fetch@2.6.13)
@@ -42,9 +48,6 @@ importers:
       '@types/node':
         specifier: ^20
         version: 20.19.11
-      '@types/node-fetch':
-        specifier: ^2.6.13
-        version: 2.6.13
       '@types/react':
         specifier: ^19
         version: 19.1.12

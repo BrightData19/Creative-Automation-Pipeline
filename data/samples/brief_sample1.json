@@ -1,0 +1,20 @@
+{
+  "campaign_name": "Indian Monsoon Refresh 2024",
+  "brand_name": "Unnanu",
+  "brand_palette": ["#e60023", "#6e56cf"],
+  "target_market": "India",
+  "target_audience": "All adults",
+  "campaign_message": "Healthy skin, healthy you",
+  "products": [
+    {
+      "name": "Moisturizer",
+      "image": null
+    },
+    {
+      "name": "Face Mask",
+      "image": null
+    }
+  ],
+  "logo_path": null,
+  "inbox_folder": "dropbox:/assets/Indian Monsoon Refresh 2024"
+}

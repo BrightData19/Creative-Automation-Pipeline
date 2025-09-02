@@ -417,8 +417,9 @@ def process_brief(brief: dict):
         inbox_folder = inbox_folder.replace("dropbox:", "")
         try:
             inbox_assets = ingestion.index_inbox(inbox_folder)
-            copied = ingestion.copy_all_assets_to_outputs(campaign_name, inbox_folder, inbox_assets)
-            send_status(campaign_name, "__campaign__", "ingestion_assets_indexed", f"Indexed {len(inbox_assets)} assets; copied {len(copied)} to outputs.")
+            # Deprecated: copying assets to outputs/<campaign>/ingested is disabled.
+            ingestion.copy_all_assets_to_outputs(campaign_name, inbox_folder, inbox_assets)
+            send_status(campaign_name, "__campaign__", "ingestion_assets_indexed", f"Indexed {len(inbox_assets)} assets.")
         except Exception as e:
             print(f"Asset ingestion warning: {e}")
 
@@ -471,11 +472,18 @@ def process_brief(brief: dict):
                         print(f"Image enhancement skipped: {e}")
                 # If not found or force flag set, generate image using enhanced prompt builder
                 if base_image is None:
+                    # Collect optional brand and asset cues
+                    brand_name = brief.get('brand_name')
+                    brand_palette = brief.get('brand_palette')
+                    asset_names = [a.name for a in inbox_assets] if inbox_assets else None
                     prompt = prompt_builder_instance.build_image_prompt(
-                        product_name, 
-                        brief['campaign_message'], 
+                        product_name,
+                        brief['campaign_message'],
                         brief['target_audience'],
-                        target_market
+                        target_market,
+                        brand_name=brand_name,
+                        asset_names=asset_names,
+                        brand_palette=brand_palette,
                     )
                     # Apply agent-provided prompt guidance if available
                     guidance_lines = []
@@ -577,7 +585,8 @@ def process_brief(brief: dict):
                 msgs = {
                     "market": target_market,
                     "product": product_name,
-                    "headline": f"{product_name}: {brief['campaign_message']}",
+                    "brand": brief.get('brand_name'),
+                    "headline": f"{(brief.get('brand_name') + ' – ') if brief.get('brand_name') else ''}{product_name}: {brief['campaign_message']}",
                     "cta": "Shop Now",
                     "link": "https://example.com/product",
                 }
@@ -599,6 +608,8 @@ def process_brief(brief: dict):
     try:
         catalog = {
             "campaign": campaign_name,
+            "brand_name": brief.get("brand_name"),
+            "brand_palette": brief.get("brand_palette"),
             "market": target_market,
             "products": [p["name"] for p in brief["products"]],
         }

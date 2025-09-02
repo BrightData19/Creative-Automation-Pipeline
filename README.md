@@ -5,7 +5,7 @@ This project is a production-quality, **Creative Automation System** designed to
 ## 🚀 Key Features
 
 - **Multi-Provider GenAI Integration**: Google Gemini 2.5 Flash Image, Adobe Firefly, OpenAI DALL-E 3 with intelligent fallback
-- **Frontend**: Next.js 14 (App Router) with Tailwind CSS for a modern, responsive UI
+- **Frontend**: Next.js 15 (App Router) with Tailwind CSS for a modern, responsive UI
 - **Event-Driven**: Asynchronous processing using Kafka (Redpanda for local dev) for a scalable and resilient architecture
 - **Comprehensive Compliance**: Brand guidelines, logo detection, legal content filtering, and automated reporting
 - **Localization Engine**: Multi-language support with cultural adaptation for global markets
@@ -19,7 +19,7 @@ The system is composed of several microservices that communicate via Kafka. See 
 
 - **Frontend**: Uploads briefs and displays a real-time dashboard
 - **Pipeline Worker**: Generates creative variants with compliance checking and localization
-  - Ingests mixed assets (images, videos, audio, docs, graphics) from `inbox_folder` and reuses product images when available; otherwise uses Gemini Flash 2.5 for a single high-res image and resizes for aspect ratios.
+  - Ingests mixed assets (images, videos, audio, docs, graphics) from `inbox_folder` and reuses product images when available; otherwise uses Gemini Flash 2.5 for a single high-res image and resizes for aspect ratios. If `brand_name` is provided, prompts are tailored to the brand’s design language and may reference provided assets by filename for visual cues.
   - Saves generated and transient assets to Dropbox/local: variants, carousels, animated GIFs, localized messages, and a campaign catalog.
   - Optional logo overlay (brand-safe zone) applied before compliance when `logo_path` is provided.
 - **Agent Worker**: Monitors and evaluates the generated assets using enhanced criteria
@@ -42,7 +42,7 @@ To use the enhanced GenAI features, you'll need API keys for at least one of the
 - **Adobe Firefly**: [Get Client ID & Secret](https://developer.adobe.com/firefly-api/)
 - **OpenAI DALL-E 3**: [Get API Key](https://platform.openai.com/api-keys)
 
-### Dropbox Configuration (App Key/Secret, Access Token, Refresh Token)
+### Dropbox Configuration (App Key/Secret + Refresh Token)
 
 To use Dropbox for asset storage, create a Dropbox app and complete OAuth 2.0 to obtain credentials:
 
@@ -70,17 +70,19 @@ curl https://api.dropboxapi.com/oauth2/token \
 - The JSON response contains a short‑lived access_token and a long‑lived refresh_token. Save both securely.
 
 3) Use tokens in this project
-- In `.env`, set the following:
+- In `.env`, set the following (refresh flow preferred):
 
 ```bash
 DROPBOX_APP_KEY=<YOUR_APP_KEY>
 DROPBOX_APP_SECRET=<YOUR_APP_SECRET>
-DROPBOX_ACCESS_TOKEN=<YOUR_ACCESS_TOKEN>
 DROPBOX_REFRESH_TOKEN=<YOUR_REFRESH_TOKEN>
 DROPBOX_ROOT=/Apps/CreativeAutomation
+
+# Optional: if you also have a static long‑lived access token
+# DROPBOX_ACCESS_TOKEN=<YOUR_ACCESS_TOKEN>
 ```
 
-- The pipeline uses the refresh token to obtain valid access; keep both secret.
+- The pipeline and frontend server routes use the refresh token to obtain short‑lived access tokens via the SDK. Keep all secrets secure.
 
 ## 🚀 Quick Start
 
@@ -100,9 +102,10 @@ cp .env.example .env
 Now, open `.env` and add your **API credentials**:
 
 ```bash
-# Required: Dropbox API credentials
-DROPBOX_ACCESS_TOKEN=your_dropbox_access_token_here
-DROPBOX_REFRESH_TOKEN=your_dropbox_refresh_token_here
+# Required: Dropbox API credentials (refresh flow preferred)
+DROPBOX_APP_KEY=your_dropbox_app_key
+DROPBOX_APP_SECRET=your_dropbox_app_secret
+DROPBOX_REFRESH_TOKEN=your_dropbox_refresh_token
 
 # Optional: GenAI provider API keys (at least one recommended)
 GOOGLE_GEMINI_API_KEY=your_gemini_api_key_here
@@ -141,7 +144,7 @@ pnpm dev
 ```
 
 ```bash
-# 2. Start the realtime WebSocket gateway
+# 2. Start the realtime SSE gateway
 cd apps/realtime-gateway
 pnpm dev
 ```
@@ -158,6 +161,13 @@ uv run python main.py
 cd apps/agent-worker
 source .venv/bin/activate
 uv run python agent_graph.py
+```
+
+```bash
+# 4b. (Optional) Start the MCP server for alerts/approvals tools
+cd apps/agent-worker
+source .venv/bin/activate
+uv run python mcp_server.py
 ```
 
 Alternatively, to run a quick offline demo without Kafka/Dropbox:
@@ -179,6 +189,7 @@ This will post the sample brief from `data/samples/brief_sample.json` to the API
 
 - Visit the **Upload Page** at [http://localhost:3000/upload](http://localhost:3000/upload)
 - Check the **Dashboard** at [http://localhost:3000/dashboard](http://localhost:3000/dashboard) to see the live status updates and the final generated creatives
+ - Use the **Approvals** UI at [http://localhost:3000/approvals](http://localhost:3000/approvals) or connect an MCP client to `creative-automation-mcp`
 
 ## 📖 Usage
 
@@ -189,6 +200,8 @@ The system accepts campaign briefs in JSON format with the following structure:
 ```json
 {
   "campaign_name": "Summer Refresh 2024",
+  "brand_name": "Unnanu",
+  "brand_palette": ["#e60023", "#6e56cf"],
   "target_market": "US West Coast",
   "target_audience": "Young adults, 18-30, interested in outdoor activities and sustainable products.",
   "campaign_message": "Stay cool, stay hydrated.",
@@ -231,6 +244,10 @@ For each product, the system generates variants in three aspect ratios:
 Key configuration options in your `.env` file:
 
 ```bash
+# Frontend env loading in monorepo
+# The frontend loads env variables from the repo root `.env` via next.config.ts.
+# You can also create apps/frontend/.env.local if you prefer per-app overrides.
+
 # Quality Thresholds
 MIN_COMPLIANCE_SCORE=0.8      # Minimum compliance score (0.0-1.0)
 MIN_LOCALIZATION_SCORE=0.7    # Minimum localization score (0.0-1.0)

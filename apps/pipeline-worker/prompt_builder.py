@@ -336,7 +336,8 @@ class PromptBuilder:
         return base_style
     
     def build_image_prompt(self, product_name: str, campaign_message: str, target_audience: str, 
-                          target_market: str = "US") -> str:
+                          target_market: str = "US", brand_name: Optional[str] = None, asset_names: Optional[List[str]] = None,
+                          brand_palette: Optional[List[str]] = None) -> str:
         """Build a localized image generation prompt."""
         
         # Categorize the product
@@ -358,12 +359,31 @@ class PromptBuilder:
             audience=target_audience,
             style=style
         )
+
+        # Brand guidance
+        if brand_name:
+            prompt += (
+                f" Adhere to {brand_name} brand aesthetics and design language;"
+                f" keep composition brand-safe, reserve subtle logo space,"
+                f" and avoid off-brand motifs."
+            )
+
+        # Asset-based cues (filenames from inbox like patterns, textures, props)
+        if asset_names:
+            # Limit to a few distinct hints to avoid overloading prompt
+            hints = ", ".join(asset_names[:3])
+            prompt += f" Consider visual cues inspired by provided assets: {hints}."
+
+        # Explicit brand palette (hex codes or color names)
+        if brand_palette:
+            palette_display = ", ".join(brand_palette[:4])
+            prompt += f" Favor color palette: {palette_display}."
         
         # Add regional context
         config = self.localization_engine.get_regional_config(target_market)
         if config["language"] != "en":
             prompt += f" Note: This image will be used in {target_market} market."
-        
+
         return prompt
     
     def build_text_prompt(self, product_name: str, campaign_message: str, target_audience: str,

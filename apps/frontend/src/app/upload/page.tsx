@@ -178,6 +178,8 @@ export default function UploadPage() {
   function loadExample() {
     const example = {
       campaign_name: "Autumn Promo",
+      brand_name: "Unnanu",
+      brand_palette: ["#e60023", "#6e56cf"],
       target_market: "US Northeast",
       target_audience: "Young professionals in urban areas",
       campaign_message: "Cozy styles for cooler days",

@@ -1,3 +1,20 @@
 .env
 .token.json
-architecture.*
+architecture.eraserdiagram
+architecture.mermaid
+
+*/node_modules
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+docs/
+token.json
