@@ -13,7 +13,7 @@
 - **Cloud Storage**: Dropbox is used as the source of truth for all assets, ensuring accessibility and organization
 - **Local Development**: A `docker-compose.yml` and `Makefile` provide a simple, one-command setup
 
-## 🏗️ Architecture
+ ## 🏗️ Architecture
 
 The system is composed of several microservices that communicate via Kafka. See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) for detailed diagrams.
 
