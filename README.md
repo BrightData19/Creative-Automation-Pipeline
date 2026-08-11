@@ -1,5 +1,5 @@
 # Creative Automation Pipeline
-
+ 
 This project is a production-quality, **Creative Automation System** designed to accelerate marketing campaign workflows. It accepts a campaign brief, generates creative assets in multiple aspect ratios, and uses an AI agent to monitor for quality and diversity.
 
 ## 🚀 Key Features
