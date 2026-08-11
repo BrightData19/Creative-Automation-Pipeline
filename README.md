@@ -1,7 +1,7 @@
 # Creative Automation Pipeline
  
 This project is a production-quality, **Creative Automation System** designed to accelerate marketing campaign workflows. It accepts a campaign brief, generates creative assets in multiple aspect ratios, and uses an AI agent to monitor for quality and diversity.
-
+ 
 ## 🚀 Key Features
 
 - **Multi-Provider GenAI Integration**: Google Gemini 2.5 Flash Image, Adobe Firefly, OpenAI DALL-E 3 with intelligent fallback
